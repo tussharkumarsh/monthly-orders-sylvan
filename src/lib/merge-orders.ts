@@ -18,7 +18,7 @@ interface ParsedRow {
   pincode: string | null;
   shipping_through: string | null;
   tracking_number: string | null;
-  product_cost: number;
+  product_cost: number | null;
   selling_price: number;
   shipping_cost: number | null;
   packing_cost: number | null;
@@ -65,7 +65,7 @@ export function parseExcelRow(row: ExcelOrderRow): ParsedRow {
     pincode: str(row["Pincode"]),
     shipping_through: str(row["Shipping Through"]),
     tracking_number: str(row["Tracking Number"]),
-    product_cost: num(row["Product Cost"]) ?? 0,
+    product_cost: num(row["Product Cost"]),
     selling_price: num(row["Selling Price"]) ?? 0,
     shipping_cost: num(row["Shipping Cost"]),
     packing_cost: num(row["Packing Cost"]),

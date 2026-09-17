@@ -31,7 +31,7 @@ export interface ExcelOrderRow {
   Pincode: string;
   "Shipping Through": string;
   "Tracking Number": string;
-  "Product Cost": number;
+  "Product Cost": number | null;
   "Selling Price": number;
   "Shipping Cost": number | null;
   "Packing Cost": number | null;

@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
         Pincode: getStr("Pincode") ?? "",
         "Shipping Through": getStr("Shipping Through") ?? "",
         "Tracking Number": getStr("Tracking Number") ?? "",
-        "Product Cost": getNum("Product Cost") ?? 0,
+        "Product Cost": getNum("Product Cost"),
         "Selling Price": getNum("Selling Price") ?? 0,
         "Shipping Cost": getNum("Shipping Cost"),
         "Packing Cost": getNum("Packing Cost"),
