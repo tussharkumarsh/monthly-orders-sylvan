@@ -16,6 +16,7 @@ const COLUMNS: { header: string; key: keyof Order; width: number }[] = [
   { header: "Product Cost", key: "product_cost", width: 14 },
   { header: "Selling Price", key: "selling_price", width: 14 },
   { header: "Shipping Cost", key: "shipping_cost", width: 14 },
+  { header: "Packing Cost", key: "packing_cost", width: 14 },
   { header: "Packing Dimension", key: "packing_dimension", width: 18 },
   { header: "Packing Weight", key: "packing_weight", width: 16 },
   { header: "Profit", key: "profit", width: 14 },

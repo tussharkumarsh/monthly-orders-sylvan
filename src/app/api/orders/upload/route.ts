@@ -4,20 +4,33 @@ import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { mergeOrders, parseExcelRow } from "@/lib/merge-orders";
 import type { ExcelOrderRow } from "@/types/order";
 
-const EXPECTED_HEADERS = [
+// Canonical field -> accepted header spellings. Extra columns in the sheet
+// (Sr No, Fulfillment Status, Profit, ...) are simply ignored since they're
+// not looked up here.
+const COLUMN_ALIASES: Record<string, string[]> = {
+  Date: ["Date"],
+  "Order No": ["Order No"],
+  Channel: ["Channel"],
+  "Product Name": ["Product Name"],
+  State: ["State"],
+  Pincode: ["Pincode"],
+  "Shipping Through": ["Shipping Through"],
+  "Tracking Number": ["Tracking Number"],
+  "Product Cost": ["Product Cost"],
+  "Selling Price": ["Selling Price"],
+  "Shipping Cost": ["Shipping Cost", "Shipping Charge"],
+  "Packing Cost": ["Packing Cost"],
+  "Packing Dimension": ["Packing Dimension", "Product Packing Dimension"],
+  "Packing Weight": ["Packing Weight", "Product Packing weight", "Product Packing Weight"],
+};
+
+const REQUIRED_FIELDS = [
   "Date",
   "Order No",
   "Channel",
   "Product Name",
-  "State",
-  "Pincode",
-  "Shipping Through",
-  "Tracking Number",
   "Product Cost",
   "Selling Price",
-  "Shipping Cost",
-  "Packing Dimension",
-  "Packing Weight",
 ];
 
 export async function POST(req: NextRequest) {
@@ -39,15 +52,22 @@ export async function POST(req: NextRequest) {
     }
 
     const headerRow = worksheet.getRow(1);
-    const headerMap: Record<string, number> = {};
+    const sheetHeaders: Record<string, number> = {};
     headerRow.eachCell((cell, colNumber) => {
-      headerMap[String(cell.value).trim()] = colNumber;
+      sheetHeaders[String(cell.value).trim().toLowerCase()] = colNumber;
     });
 
-    const missingHeaders = EXPECTED_HEADERS.filter((h) => !(h in headerMap));
-    if (missingHeaders.length) {
+    // Resolve each canonical field to whichever alias is present in the sheet.
+    const resolvedColumn: Record<string, number | undefined> = {};
+    for (const [field, aliases] of Object.entries(COLUMN_ALIASES)) {
+      const match = aliases.find((alias) => alias.toLowerCase() in sheetHeaders);
+      resolvedColumn[field] = match ? sheetHeaders[match.toLowerCase()] : undefined;
+    }
+
+    const missingRequired = REQUIRED_FIELDS.filter((f) => !resolvedColumn[f]);
+    if (missingRequired.length) {
       return NextResponse.json(
-        { error: `Missing required columns: ${missingHeaders.join(", ")}` },
+        { error: `Missing required columns: ${missingRequired.join(", ")}` },
         { status: 400 }
       );
     }
@@ -59,32 +79,37 @@ export async function POST(req: NextRequest) {
       if (rowNumber === 1) return;
       if (row.actualCellCount === 0) return;
 
-      const getCell = (header: string) => row.getCell(headerMap[header]).value;
+      const getCell = (field: string) => {
+        const col = resolvedColumn[field];
+        return col ? row.getCell(col).value : null;
+      };
+      const getStr = (field: string) => {
+        const v = getCell(field);
+        return v !== null && v !== undefined && String(v).trim() !== "" ? String(v) : null;
+      };
+      const getNum = (field: string) => {
+        const v = getCell(field);
+        return v !== null && v !== undefined && String(v).trim() !== "" ? Number(v) : null;
+      };
 
       const excelRow: ExcelOrderRow = {
         Date: getCell("Date") as string | Date,
-        "Order No": String(getCell("Order No") ?? ""),
-        Channel: String(getCell("Channel") ?? ""),
-        "Product Name": String(getCell("Product Name") ?? ""),
-        State: String(getCell("State") ?? ""),
-        Pincode: String(getCell("Pincode") ?? ""),
-        "Shipping Through": String(getCell("Shipping Through") ?? ""),
-        "Tracking Number": String(getCell("Tracking Number") ?? ""),
-        "Product Cost": Number(getCell("Product Cost") ?? 0),
-        "Selling Price": Number(getCell("Selling Price") ?? 0),
-        "Shipping Cost":
-          getCell("Shipping Cost") !== null && getCell("Shipping Cost") !== undefined && getCell("Shipping Cost") !== ""
-            ? Number(getCell("Shipping Cost"))
-            : null,
-        "Packing Dimension": getCell("Packing Dimension")
-          ? String(getCell("Packing Dimension"))
-          : null,
-        "Packing Weight": getCell("Packing Weight")
-          ? String(getCell("Packing Weight"))
-          : null,
+        "Order No": getStr("Order No") ?? "",
+        Channel: getStr("Channel") ?? "",
+        "Product Name": getStr("Product Name") ?? "",
+        State: getStr("State") ?? "",
+        Pincode: getStr("Pincode") ?? "",
+        "Shipping Through": getStr("Shipping Through") ?? "",
+        "Tracking Number": getStr("Tracking Number") ?? "",
+        "Product Cost": getNum("Product Cost") ?? 0,
+        "Selling Price": getNum("Selling Price") ?? 0,
+        "Shipping Cost": getNum("Shipping Cost"),
+        "Packing Cost": getNum("Packing Cost"),
+        "Packing Dimension": getStr("Packing Dimension"),
+        "Packing Weight": getStr("Packing Weight"),
       };
 
-      if (!excelRow["Order No"] || excelRow["Order No"].trim() === "") return;
+      if (!excelRow["Order No"]) return;
 
       try {
         rows.push(parseExcelRow(excelRow));

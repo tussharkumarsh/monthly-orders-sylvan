@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 const EDITABLE_FIELDS = [
   "shipping_cost",
+  "packing_cost",
   "packing_dimension",
   "packing_weight",
   "tracking_number",

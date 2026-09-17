@@ -31,6 +31,7 @@ export default function EditOrderPage() {
         setOrder(data.order);
         setForm({
           shipping_cost: data.order.shipping_cost != null ? String(data.order.shipping_cost) : "",
+          packing_cost: data.order.packing_cost != null ? String(data.order.packing_cost) : "",
           product_cost: String(data.order.product_cost),
           selling_price: String(data.order.selling_price),
           state: data.order.state ?? "",
@@ -55,6 +56,7 @@ export default function EditOrderPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           shipping_cost: form.shipping_cost === "" ? null : Number(form.shipping_cost),
+          packing_cost: form.packing_cost === "" ? null : Number(form.packing_cost),
           product_cost: Number(form.product_cost),
           selling_price: Number(form.selling_price),
           state: form.state,
@@ -108,15 +110,27 @@ export default function EditOrderPage() {
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-1">Shipping Cost (₹)</label>
-          <input
-            type="number"
-            step="0.01"
-            value={form.shipping_cost}
-            onChange={(e) => setForm({ ...form, shipping_cost: e.target.value })}
-            className="w-full border rounded px-3 py-2"
-          />
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Shipping Cost (₹)</label>
+            <input
+              type="number"
+              step="0.01"
+              value={form.shipping_cost}
+              onChange={(e) => setForm({ ...form, shipping_cost: e.target.value })}
+              className="w-full border rounded px-3 py-2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Packing Cost (₹)</label>
+            <input
+              type="number"
+              step="0.01"
+              value={form.packing_cost}
+              onChange={(e) => setForm({ ...form, packing_cost: e.target.value })}
+              className="w-full border rounded px-3 py-2"
+            />
+          </div>
         </div>
 
         {EDITABLE_TEXT_FIELDS.map((f) => (

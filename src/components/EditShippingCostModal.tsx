@@ -13,6 +13,9 @@ export default function EditShippingCostModal({ order, onClose, onSaved }: Props
   const [shippingCost, setShippingCost] = useState(
     order.shipping_cost != null ? String(order.shipping_cost) : ""
   );
+  const [packingCost, setPackingCost] = useState(
+    order.packing_cost != null ? String(order.packing_cost) : ""
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,6 +28,7 @@ export default function EditShippingCostModal({ order, onClose, onSaved }: Props
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           shipping_cost: shippingCost === "" ? null : Number(shippingCost),
+          packing_cost: packingCost === "" ? null : Number(packingCost),
         }),
       });
       if (!res.ok) {
@@ -42,7 +46,7 @@ export default function EditShippingCostModal({ order, onClose, onSaved }: Props
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-lg w-full max-w-sm p-6">
-        <h2 className="text-lg font-semibold mb-1">Edit Shipping Cost</h2>
+        <h2 className="text-lg font-semibold mb-1">Edit Costs</h2>
         <p className="text-sm text-gray-500 mb-4">Order {order.order_no}</p>
 
         <label className="block text-sm font-medium mb-1">Shipping Cost (₹)</label>
@@ -51,11 +55,20 @@ export default function EditShippingCostModal({ order, onClose, onSaved }: Props
           step="0.01"
           value={shippingCost}
           onChange={(e) => setShippingCost(e.target.value)}
-          className="w-full border rounded px-3 py-2 mb-1"
+          className="w-full border rounded px-3 py-2 mb-3"
           autoFocus
         />
+
+        <label className="block text-sm font-medium mb-1">Packing Cost (₹)</label>
+        <input
+          type="number"
+          step="0.01"
+          value={packingCost}
+          onChange={(e) => setPackingCost(e.target.value)}
+          className="w-full border rounded px-3 py-2 mb-1"
+        />
         <p className="text-xs text-gray-500 mb-4">
-          Profit = Selling Price − Product Cost − Shipping Cost
+          Profit = Selling Price − Product Cost − Shipping Cost − Packing Cost
         </p>
 
         {error && <p className="text-sm text-red-600 mb-3">{error}</p>}

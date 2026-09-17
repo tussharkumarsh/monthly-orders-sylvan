@@ -4,6 +4,11 @@ import type { Channel, ExcelOrderRow, UploadResult } from "@/types/order";
 
 const VALID_CHANNELS: Channel[] = ["Shopify", "Amazon", "Flipkart"];
 
+// Aliases seen in real order sheet exports for the same channel.
+const CHANNEL_ALIASES: Record<string, Channel> = {
+  "online store": "Shopify",
+};
+
 interface ParsedRow {
   order_no: string;
   date: string;
@@ -16,6 +21,7 @@ interface ParsedRow {
   product_cost: number;
   selling_price: number;
   shipping_cost: number | null;
+  packing_cost: number | null;
   packing_dimension: string | null;
   packing_weight: string | null;
 }
@@ -37,9 +43,9 @@ export function parseExcelRow(row: ExcelOrderRow): ParsedRow {
   if (!orderNo) throw new Error("Missing Order No");
 
   const channelRaw = str(row["Channel"]) ?? "";
-  const channel = VALID_CHANNELS.find(
-    (c) => c.toLowerCase() === channelRaw.toLowerCase()
-  );
+  const channel =
+    VALID_CHANNELS.find((c) => c.toLowerCase() === channelRaw.toLowerCase()) ??
+    CHANNEL_ALIASES[channelRaw.toLowerCase()];
   if (!channel) {
     throw new Error(`Invalid channel "${channelRaw}" (must be Shopify/Amazon/Flipkart)`);
   }
@@ -62,6 +68,7 @@ export function parseExcelRow(row: ExcelOrderRow): ParsedRow {
     product_cost: num(row["Product Cost"]) ?? 0,
     selling_price: num(row["Selling Price"]) ?? 0,
     shipping_cost: num(row["Shipping Cost"]),
+    packing_cost: num(row["Packing Cost"]),
     packing_dimension: str(row["Packing Dimension"]),
     packing_weight: str(row["Packing Weight"]),
   };
@@ -70,8 +77,8 @@ export function parseExcelRow(row: ExcelOrderRow): ParsedRow {
 /**
  * Merges parsed Excel rows into the orders table following the rules:
  * - New order_no -> insert full record.
- * - Existing order_no -> keep existing shipping_cost, packing_dimension,
- *   packing_weight; update other fields only if they differ.
+ * - Existing order_no -> keep existing shipping_cost, packing_cost,
+ *   packing_dimension, packing_weight; update other fields only if they differ.
  * Runs as a single all-or-nothing transaction via a Postgres RPC.
  */
 export async function mergeOrders(

@@ -44,3 +44,8 @@ next-env.d.ts
 .agents/
 .aider-desk/
 skills-lock.json
+
+# sample order data (contains real cost/pricing) - public/ is served
+# statically by Next.js, so files here must never contain business data
+public/*.xlsx
+public/*.xls

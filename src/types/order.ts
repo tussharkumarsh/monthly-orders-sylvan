@@ -13,6 +13,7 @@ export interface Order {
   product_cost: number;
   selling_price: number;
   shipping_cost: number | null;
+  packing_cost: number | null;
   packing_dimension: string | null;
   packing_weight: string | null;
   profit: number;
@@ -33,6 +34,7 @@ export interface ExcelOrderRow {
   "Product Cost": number;
   "Selling Price": number;
   "Shipping Cost": number | null;
+  "Packing Cost": number | null;
   "Packing Dimension": string | null;
   "Packing Weight": string | null;
 }
