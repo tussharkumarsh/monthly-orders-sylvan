@@ -12,7 +12,16 @@ export function toIstIso(value: string | Date | number): string {
     // Excel serial date (days since 1899-12-30)
     date = new Date(Date.UTC(1899, 11, 30) + value * 86400000);
   } else {
-    date = new Date(value);
+    // Excel cells formatted as text often come through as "DD-MM-YYYY" or
+    // "DD/MM/YYYY", which JS Date cannot parse natively (it assumes
+    // MM/DD/YYYY or gets confused entirely). Parse that explicitly first.
+    const dmy = value.trim().match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+    if (dmy) {
+      const [, day, month, year] = dmy;
+      date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+    } else {
+      date = new Date(value);
+    }
   }
   if (Number.isNaN(date.getTime())) {
     throw new Error(`Invalid date value: ${String(value)}`);
